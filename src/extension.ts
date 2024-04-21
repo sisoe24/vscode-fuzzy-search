@@ -3,9 +3,11 @@ import * as vscode from 'vscode';
 class Item implements vscode.QuickPickItem {
   description: string
   detail: string
+  rawText: string
 
-  constructor(public label: string, public line: number) {
+  constructor(public label: string, public line: number, rawText: string) {
     this.label = label.trim();
+    this.rawText = rawText;
   }
 }
 
@@ -28,7 +30,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
   for (let i = 0; i < lines.length; ++i) {
     if (lines[i]) {
       quickPickEntries.push(
-        new Item(`${pad((i + 1).toString(), maxNumberLength)}: ${lines[i]}`, i));
+        new Item(`${pad((i + 1).toString(), maxNumberLength)}: ${lines[i]}`, i, lines[i]));
     }
   }
 
@@ -49,6 +51,21 @@ function showFuzzySearch(useCurrentSelection: boolean) {
   // search is invoked.
   pick.onDidAccept(() => {
     lastSelected = pick.selectedItems[0];
+
+    // Find the first occurrence of the search string in the selected item.
+    let charPos = lastSelected.rawText
+      .toLowerCase()
+      .indexOf(valueFromPreviousInvocation.toLowerCase()
+    );
+
+    if (charPos == -1) {
+      charPos = 0;
+    }
+
+    const position = new vscode.Position(lastSelected.line, charPos);
+    const selection = new vscode.Selection(position, position);
+    vscode.window.activeTextEditor.selection = selection;
+
     pick.hide();
   });
 
