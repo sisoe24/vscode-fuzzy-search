@@ -23,10 +23,15 @@ function showFuzzySearch(useCurrentSelection: boolean) {
   // Build the entries we will show the user. One entry for each non-empty line,
   // prefixed with the line number. We prefix with the line number so lines stay
   // in the correct order and so duplicate lines do not get merged together.
-  let lines: string[] =
-    vscode.window.activeTextEditor.document.getText().split(/\r?\n/);
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  let lines: string[] = editor.document.getText().split(/\r?\n/);
   let maxNumberLength = lines.length.toString().length;
   let quickPickEntries: Item[] = [];
+
   for (let i = 0; i < lines.length; ++i) {
     if (lines[i]) {
       quickPickEntries.push(
@@ -64,7 +69,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
 
     const position = new vscode.Position(lastSelected.line, charPos);
     const selection = new vscode.Selection(position, position);
-    vscode.window.activeTextEditor.selection = selection;
+    editor.selection = selection;
 
     pick.hide();
   });
@@ -75,15 +80,15 @@ function showFuzzySearch(useCurrentSelection: boolean) {
     if (!items.length)  return;
     
     let p = new vscode.Position(items[0].line, 0);
-    vscode.window.activeTextEditor.revealRange(
+    editor.revealRange(
     new vscode.Range(p, p), vscode.TextEditorRevealType.InCenter);
-    vscode.window.activeTextEditor.selection = new vscode.Selection(p, p);
+    editor.selection = new vscode.Selection(p, p);
   });
 
 
   if (useCurrentSelection) {
-    pick.value = vscode.window.activeTextEditor.document.getText(
-      vscode.window.activeTextEditor.selection);
+    pick.value = editor.document.getText(
+      editor.selection);
   } else {
     // Show the previous search string. When the user types a character, the
     // preview string will replaced with the typed character.
@@ -111,13 +116,13 @@ function showFuzzySearch(useCurrentSelection: boolean) {
 
 
   // If fuzzy-search was cancelled navigate to the previous location.
-  let startingSelection = vscode.window.activeTextEditor.selection;
+  let startingSelection = editor.selection;
   pick.onDidHide(() => {
     if (pick.selectedItems.length == 0) {
-      vscode.window.activeTextEditor.revealRange(
+      editor.revealRange(
         new vscode.Range(startingSelection.start, startingSelection.end),
         vscode.TextEditorRevealType.InCenter);
-      vscode.window.activeTextEditor.selection = startingSelection;
+      editor.selection = startingSelection;
     }
   });
 
