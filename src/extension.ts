@@ -6,6 +6,8 @@ class Item implements vscode.QuickPickItem {
   rawText: string
 
   constructor(public label: string, public line: number, rawText: string) {
+    this.description = '';
+    this.detail = '';
     this.label = label.trim();
     this.rawText = rawText;
   }
@@ -17,7 +19,7 @@ function pad(str: string, length: number) {
 }
 
 let valueFromPreviousInvocation = '';
-let lastSelected: Item = undefined;
+let lastSelected: Item = new Item('', 0, '');
 
 function showFuzzySearch(useCurrentSelection: boolean) {
   // Build the entries we will show the user. One entry for each non-empty line,
@@ -49,7 +51,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
   if (lastSelected) {
     // Update `lastSelected` reference to point to the current entry in `items`.
     lastSelected = quickPickEntries.find(
-      t => t.line == lastSelected.line || t.label == lastSelected.label);
+      t => t.line == lastSelected.line || t.label == lastSelected.label)!;
   }
   pick.activeItems = [lastSelected];
   // Save the item the user selected so it can be pre-selected next time fuzzy
