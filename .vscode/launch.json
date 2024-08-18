@@ -9,7 +9,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				// "C:/Users/jacob/Desktop/vscode", 
-				"--disable-extensions",
+				// "--disable-extensions",
 				"--extensionDevelopmentPath=${workspaceRoot}"
 			],
 			"stopOnEntry": false,
