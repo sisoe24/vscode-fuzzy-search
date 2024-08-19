@@ -34,14 +34,19 @@
         "command": "fuzzySearch.activeTextEditor"
       },
       {
-        "title": "Fuzzy outline errors",
+        "title": "Fuzzy outline with current selection",
+        "category": "Search",
+        "command": "fuzzySearch.activeTextEditorWithCurrentSelection"
+      },
+      {
+        "title": "Fuzzy problems",
         "category": "Search",
         "command": "fuzzySearch.activeTextEditorErrors"
       },
       {
-        "title": "Fuzzy outline with current selection",
+        "title": "Fuzzy git files",
         "category": "Search",
-        "command": "fuzzySearch.activeTextEditorWithCurrentSelection"
+        "command": "fuzzySearch.gitFiles"
       }
     ]
   },

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showGitFiles } from './fuzzy_git';
 
 class Item implements vscode.QuickPickItem {
   description: string
@@ -147,57 +148,62 @@ function fuzzySearch(useCurrentSelection: boolean = false) {
 
 
 function showDiagnostics(level: vscode.DiagnosticSeverity) {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-
-  const currentFile = editor.document.fileName;
-  const allDiagnostics = vscode.languages.getDiagnostics();
-
-  for (const [uri, diagnostics] of allDiagnostics) {
-    if (uri.path !== currentFile) {
-      continue;
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
     }
 
-    const errors = diagnostics.filter( (diag) => diag.severity <= level);
-    const quickPickEntries: Item[] = [];
+    const currentFile = editor.document.fileName;
+    const allDiagnostics = vscode.languages.getDiagnostics();
 
-    for (let i = 0; i < errors.length; i++) {
-      const error = errors[i];
-      const errNum = pad((i + 1).toString(), errors.length.toString().length);
-      const errLabel = getEnumKey(vscode.DiagnosticSeverity, error.severity);
+    for (const [uri, diagnostics] of allDiagnostics) {
+        if (uri.path !== currentFile) {
+            continue;
+        }
 
-      quickPickEntries.push(
-        new Item(
-          `[${errNum} ${errLabel}]: ${error.message}`,
-          error.range.start.line,
-          error.message
-        )
-      );
+        const errors = diagnostics.filter((diag) => diag.severity <= level);
+        const quickPickEntries: Item[] = [];
+
+        for (let i = 0; i < errors.length; i++) {
+            const error = errors[i];
+            const errNum = pad((i + 1).toString(), errors.length.toString().length);
+            const errLabel = getEnumKey(vscode.DiagnosticSeverity, error.severity);
+
+            quickPickEntries.push(
+                new Item(
+                    `[${errNum} ${errLabel}]: ${error.message}`,
+                    error.range.start.line,
+                    error.message
+                )
+            );
+        }
+
+        showFuzzySearch(editor, quickPickEntries, false);
     }
-
-    showFuzzySearch(editor, quickPickEntries, false);
-  }
 }
 
+
 export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("fuzzySearch.activeTextEditor", () =>
-      fuzzySearch()
-    )
-  );
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.activeTextEditor", () => fuzzySearch())
+    );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand("fuzzySearch.activeTextEditorErrors", () =>
-      // TODO: We should make it configurable
-      showDiagnostics(vscode.DiagnosticSeverity.Error)
-    )
-  );
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.activeTextEditorWithCurrentSelection", () =>
+            fuzzySearch(true)
+        )
+    );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "fuzzySearch.activeTextEditorWithCurrentSelection", () => fuzzySearch(true)
-    )
-  );
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.gitFiles", () => {
+            showGitFiles();
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.activeTextEditorErrors", () =>
+            // TODO: We should make it configurable
+            showDiagnostics(vscode.DiagnosticSeverity.Error)
+        )
+    );
 }
