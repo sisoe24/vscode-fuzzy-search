@@ -11,8 +11,7 @@
   },
   "categories": [],
   "activationEvents": [
-    "onCommand:fuzzySearch.activeTextEditor",
-    "onCommand:fuzzySearch.activeTextEditorWithCurrentSelection"
+    "onStartupFinished"
   ],
   "extensionKind": [
     "ui",
@@ -26,13 +25,18 @@
   "bugs": {
     "url": "https://github.com/jacobdufault/vscode-fuzzy-search/issues"
   },
-  "main": "./out/src/extension",
+  "main": "./out/extension",
   "contributes": {
     "commands": [
       {
         "title": "Fuzzy outline",
         "category": "Search",
         "command": "fuzzySearch.activeTextEditor"
+      },
+      {
+        "title": "Fuzzy outline errors",
+        "category": "Search",
+        "command": "fuzzySearch.activeTextEditorErrors"
       },
       {
         "title": "Fuzzy outline with current selection",
@@ -43,6 +47,7 @@
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
     "compile": "tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },

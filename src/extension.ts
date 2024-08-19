@@ -18,34 +18,22 @@ function pad(str: string, length: number) {
   return '0'.repeat(length - str.length) + str
 }
 
+function getEnumKey(enumObj: any, value: number | string): string | undefined  {
+  return Object.keys(enumObj).find((key) => enumObj[key] === value);
+}
+
 let valueFromPreviousInvocation = '';
 let lastSelected: Item = new Item('', 0, '');
 
-function showFuzzySearch(useCurrentSelection: boolean) {
+function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], useCurrentSelection: boolean) {
   // Build the entries we will show the user. One entry for each non-empty line,
   // prefixed with the line number. We prefix with the line number so lines stay
   // in the correct order and so duplicate lines do not get merged together.
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-
-  let lines: string[] = editor.document.getText().split(/\r?\n/);
-  let maxNumberLength = lines.length.toString().length;
-  let quickPickEntries: Item[] = [];
-
-  for (let i = 0; i < lines.length; ++i) {
-    if (lines[i]) {
-      quickPickEntries.push(
-        new Item(`${pad((i + 1).toString(), maxNumberLength)}: ${lines[i]}`, i, lines[i]));
-    }
-  }
 
   // Setup basic quick pick.
   let pick = vscode.window.createQuickPick<Item>();
   pick.items = quickPickEntries;
   pick.canSelectMany = false;
-
 
   // Try to preselect the previously selected item.
   if (lastSelected) {
@@ -54,6 +42,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
       t => t.line == lastSelected.line || t.label == lastSelected.label)!;
   }
   pick.activeItems = [lastSelected];
+
   // Save the item the user selected so it can be pre-selected next time fuzzy
   // search is invoked.
   pick.onDidAccept(() => {
@@ -79,7 +68,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
 
   // Show the currently selected item in the editor.
   pick.onDidChangeActive(items => {
-    if (!items.length)  return;
+    if (!items.length) return;
     
     let p = new vscode.Position(items[0].line, 0);
     editor.revealRange(
@@ -89,8 +78,7 @@ function showFuzzySearch(useCurrentSelection: boolean) {
 
 
   if (useCurrentSelection) {
-    pick.value = editor.document.getText(
-      editor.selection);
+    pick.value = editor.document.getText(editor.selection);
   } else {
     // Show the previous search string. When the user types a character, the
     // preview string will replaced with the typed character.
@@ -132,9 +120,84 @@ function showFuzzySearch(useCurrentSelection: boolean) {
   pick.show();
 }
 
+function fuzzySearch(useCurrentSelection: boolean = false) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const lines: string[] = editor.document.getText().split(/\r?\n/);
+  const maxNumberLength = lines.length.toString().length;
+  const quickPickEntries: Item[] = [];
+
+  for (let i = 0; i < lines.length; ++i) {
+    if (lines[i]) {
+      quickPickEntries.push(
+        new Item(
+          `${pad((i + 1).toString(), maxNumberLength)}: ${lines[i]}`,
+          i,
+          lines[i]
+        )
+      );
+    }
+  }
+
+  showFuzzySearch(editor, quickPickEntries, useCurrentSelection);
+}
+
+
+function showDiagnostics(level: vscode.DiagnosticSeverity) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const currentFile = editor.document.fileName;
+  const allDiagnostics = vscode.languages.getDiagnostics();
+
+  for (const [uri, diagnostics] of allDiagnostics) {
+    if (uri.path !== currentFile) {
+      continue;
+    }
+
+    const errors = diagnostics.filter( (diag) => diag.severity <= level);
+    const quickPickEntries: Item[] = [];
+
+    for (let i = 0; i < errors.length; i++) {
+      const error = errors[i];
+      const errNum = pad((i + 1).toString(), errors.length.toString().length);
+      const errLabel = getEnumKey(vscode.DiagnosticSeverity, error.severity);
+
+      quickPickEntries.push(
+        new Item(
+          `[${errNum} ${errLabel}]: ${error.message}`,
+          error.range.start.line,
+          error.message
+        )
+      );
+    }
+
+    showFuzzySearch(editor, quickPickEntries, false);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand(
-    'fuzzySearch.activeTextEditor', () => showFuzzySearch(false)));
-  context.subscriptions.push(vscode.commands.registerCommand(
-    'fuzzySearch.activeTextEditorWithCurrentSelection', () => showFuzzySearch(true)));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("fuzzySearch.activeTextEditor", () =>
+      fuzzySearch()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("fuzzySearch.activeTextEditorErrors", () =>
+      // TODO: We should make it configurable
+      showDiagnostics(vscode.DiagnosticSeverity.Error)
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "fuzzySearch.activeTextEditorWithCurrentSelection", () => fuzzySearch(true)
+    )
+  );
 }
