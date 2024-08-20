@@ -131,6 +131,11 @@ async function getGitStatus(): Promise<GitStatusObject[]> {
  */
 export async function showGitStatus() {
     const gitStatus = await getGitStatus();
+    if (gitStatus.length === 0) {
+        vscode.window.showInformationMessage("No git changes found");
+        return;
+    }
+
     const pickerItems: GitItem[] = [];
 
     for (const file of gitStatus) {
@@ -210,10 +215,18 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
     const activeFile = repo.state.workingTreeChanges.filter(
         (change) => change.uri.fsPath === editor.document.fileName
     )[0];
+    if (!activeFile) {
+        vscode.window.showInformationMessage("No git changes found");
+        return [];
+    }
 
     // Use blame to get the full file and its line count, making it easier to
     // parse compared to diff HEAD.
     const gitChanges = parseBlameOutput(await repo.blame(activeFile.uri.path));
+    if (gitChanges.length === 0) {
+        vscode.window.showInformationMessage("No git changes found");
+        return [];
+    }
 
     const pickerItems: Item[] = [];
 
