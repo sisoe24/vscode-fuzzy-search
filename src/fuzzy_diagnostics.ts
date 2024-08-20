@@ -23,8 +23,12 @@ const diagnosticIcons = {
 
 export function getFileDiagnostics(fileName: string, level: vscode.DiagnosticSeverity): Item[] {
     const allDiagnostics = vscode.languages.getDiagnostics();
-    const currentFileDiagnostics = allDiagnostics.filter((diag) => diag[0].path === fileName)[0][1];
+    if (allDiagnostics.length === 0) {
+        vscode.window.showInformationMessage("No diagnostics found");
+        return []
+    }
 
+    const currentFileDiagnostics = allDiagnostics.filter((diag) => diag[0].path === fileName)[0][1];
     const items: Item[] = [];
 
     for (let i = 0; i < currentFileDiagnostics.length; i++) {
