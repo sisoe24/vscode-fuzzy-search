@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showGitChanges, showGitFiles } from './fuzzy_git';
+import { showGitChanges, showGitStatus } from './fuzzy_git';
 import { Item } from "./fuzzy_item"
 
 
@@ -191,8 +191,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand("fuzzySearch.gitFiles", () => {
-            showGitFiles();
+        vscode.commands.registerCommand("fuzzySearch.gitStatus", () => {
+            showGitStatus();
         })
     );
 

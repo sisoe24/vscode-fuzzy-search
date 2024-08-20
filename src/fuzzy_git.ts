@@ -7,6 +7,7 @@ interface StatusRecord {
     key: string;
     symbol: string;
     description: string;
+    icon: string;
 }
 
 type GitStatusObject = {
@@ -16,25 +17,25 @@ type GitStatusObject = {
 
 // prettier-ignore
 const StatusMap: Record<Status, StatusRecord> = {
-    [Status.INDEX_MODIFIED]: { key: 'INDEX_MODIFIED', symbol: 'M', description: 'Modified in index' },
-    [Status.INDEX_ADDED]: { key: 'INDEX_ADDED', symbol: 'A', description: 'Added to index' },
-    [Status.INDEX_DELETED]: { key: 'INDEX_DELETED', symbol: 'D', description: 'Deleted from index' },
-    [Status.INDEX_RENAMED]: { key: 'INDEX_RENAMED', symbol: 'R', description: 'Renamed in index' },
-    [Status.INDEX_COPIED]: { key: 'INDEX_COPIED', symbol: 'C', description: 'Copied in index' },
-    [Status.MODIFIED]: { key: 'MODIFIED', symbol: 'M', description: 'Modified in working tree' },
-    [Status.DELETED]: { key: 'DELETED', symbol: 'D', description: 'Deleted in working tree' },
-    [Status.UNTRACKED]: { key: 'UNTRACKED', symbol: '?', description: 'Untracked' },
-    [Status.IGNORED]: { key: 'IGNORED', symbol: '!', description: 'Ignored' },
-    [Status.INTENT_TO_ADD]: { key: 'INTENT_TO_ADD', symbol: 'A', description: 'Intent to add' },
-    [Status.INTENT_TO_RENAME]: { key: 'INTENT_TO_RENAME', symbol: 'R', description: 'Intent to rename' },
-    [Status.TYPE_CHANGED]: { key: 'TYPE_CHANGED', symbol: 'T', description: 'Type changed' },
-    [Status.ADDED_BY_US]: { key: 'ADDED_BY_US', symbol: 'U', description: 'Added by us in merge' },
-    [Status.ADDED_BY_THEM]: { key: 'ADDED_BY_THEM', symbol: 'T', description: 'Added by them in merge' },
-    [Status.DELETED_BY_US]: { key: 'DELETED_BY_US', symbol: 'U', description: 'Deleted by us in merge' },
-    [Status.DELETED_BY_THEM]: { key: 'DELETED_BY_THEM', symbol: 'T', description: 'Deleted by them in merge' },
-    [Status.BOTH_ADDED]: { key: 'BOTH_ADDED', symbol: 'B', description: 'Both added in merge' },
-    [Status.BOTH_DELETED]: { key: 'BOTH_DELETED', symbol: 'B', description: 'Both deleted in merge' },
-    [Status.BOTH_MODIFIED]: { key: 'BOTH_MODIFIED', symbol: 'B', description: 'Both modified in merge' },
+    [Status.INDEX_MODIFIED]: { key: 'INDEX_MODIFIED', symbol: 'M', description: 'Modified in index', icon: 'diff-modified' },
+    [Status.INDEX_ADDED]: { key: 'INDEX_ADDED', symbol: 'A', description: 'Added to index', icon: 'diff-added' },
+    [Status.INDEX_DELETED]: { key: 'INDEX_DELETED', symbol: 'D', description: 'Deleted from index', icon: 'diff-removed' },
+    [Status.INDEX_RENAMED]: { key: 'INDEX_RENAMED', symbol: 'R', description: 'Renamed in index', icon: 'diff-renamed' },
+    [Status.INDEX_COPIED]: { key: 'INDEX_COPIED', symbol: 'C', description: 'Copied in index', icon: '' },
+    [Status.MODIFIED]: { key: 'MODIFIED', symbol: 'M', description: 'Modified in working tree', icon: 'diff-modified' },
+    [Status.DELETED]: { key: 'DELETED', symbol: 'D', description: 'Deleted in working tree', icon: 'diff-removed' },
+    [Status.UNTRACKED]: { key: 'UNTRACKED', symbol: '?', description: 'Untracked', icon: 'diff-added' },
+    [Status.IGNORED]: { key: 'IGNORED', symbol: '!', description: 'Ignored', icon: 'diff-ignored' },
+    [Status.INTENT_TO_ADD]: { key: 'INTENT_TO_ADD', symbol: 'A', description: 'Intent to add', icon: 'diff-added' },
+    [Status.INTENT_TO_RENAME]: { key: 'INTENT_TO_RENAME', symbol: 'R', description: 'Intent to rename', icon: 'diff-renamed' },
+    [Status.TYPE_CHANGED]: { key: 'TYPE_CHANGED', symbol: 'T', description: 'Type changed', icon: '' },
+    [Status.ADDED_BY_US]: { key: 'ADDED_BY_US', symbol: 'U', description: 'Added by us in merge', icon: 'git-merge' },
+    [Status.ADDED_BY_THEM]: { key: 'ADDED_BY_THEM', symbol: 'T', description: 'Added by them in merge', icon: 'git-merge' },
+    [Status.DELETED_BY_US]: { key: 'DELETED_BY_US', symbol: 'U', description: 'Deleted by us in merge', icon: 'git-merge' },
+    [Status.DELETED_BY_THEM]: { key: 'DELETED_BY_THEM', symbol: 'T', description: 'Deleted by them in merge', icon: 'git-merge' },
+    [Status.BOTH_ADDED]: { key: 'BOTH_ADDED', symbol: 'B', description: 'Both added in merge', icon: 'git-merge' },
+    [Status.BOTH_DELETED]: { key: 'BOTH_DELETED', symbol: 'B', description: 'Both deleted in merge', icon: 'git-merge' },
+    [Status.BOTH_MODIFIED]: { key: 'BOTH_MODIFIED', symbol: 'B', description: 'Both modified in merge', icon: 'git-merge' },
 };
 
 function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitStatusObject {
@@ -59,19 +60,19 @@ function getGitRepository(): Repository | null {
 }
 
 
-async function getGitfiles(): Promise<GitStatusObject[]> {
-    const gitFiles: GitStatusObject[] = [];
+async function getGitStatus(): Promise<GitStatusObject[]> {
+    const gitStatus: GitStatusObject[] = [];
     const repo = getGitRepository();
     if (!repo) {
         return [];
     }
 
     for (const change of repo.state.indexChanges) {
-        gitFiles.push(makeGitStatusObject(change.status, change.uri));
+        gitStatus.push(makeGitStatusObject(change.status, change.uri));
     }
 
     for (const change of repo.state.untrackedChanges) {
-        gitFiles.push(makeGitStatusObject(change.status, change.uri));
+        gitStatus.push(makeGitStatusObject(change.status, change.uri));
     }
 
     for (const change of repo.state.workingTreeChanges) {
@@ -79,24 +80,24 @@ async function getGitfiles(): Promise<GitStatusObject[]> {
         if (change.status === 6) {
             continue;
         }
-        gitFiles.push(makeGitStatusObject(change.status, change.uri));
+        gitStatus.push(makeGitStatusObject(change.status, change.uri));
     }
 
-    return gitFiles;
+    return gitStatus;
 }
 
 class GitItem implements vscode.QuickPickItem {
     constructor(public label: string, public description: string, public uri: vscode.Uri) {}
 }
 
-export async function showGitFiles() {
-    const gitFiles = await getGitfiles();
+export async function showGitStatus() {
+    const gitStatus = await getGitStatus();
     const pickerItems: GitItem[] = [];
 
-    for (const file of gitFiles) {
+    for (const file of gitStatus) {
         pickerItems.push(
             new GitItem(
-                `${file.status.symbol} ${path.basename(file.uri.path)}`,
+                `$(${file.status.icon}) ${file.status.symbol} ${path.basename(file.uri.path)}`,
                 file.status.description,
                 file.uri
             )
