@@ -1,6 +1,7 @@
 import path = require("path");
 import * as vscode from "vscode";
-import { GitExtension, Status } from "vscode-git-types";
+import { GitExtension, Repository, Status } from "vscode-git-types";
+import { Item } from "./fuzzy_item";
 
 interface StatusRecord {
     key: string;
@@ -40,10 +41,11 @@ function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitStatusO
     return { status: StatusMap[gitStatusCode], uri: uri };
 }
 
-async function getGitfiles(): Promise<GitStatusObject[]> {
+function getGitRepository(): Repository | null {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git")?.exports;
     if (!gitExtension) {
-        throw new Error("Git extension not found");
+        vscode.window.showErrorMessage("Git extension not found");
+        return null;
     }
 
     const git = gitExtension.getAPI(1);
@@ -51,10 +53,18 @@ async function getGitfiles(): Promise<GitStatusObject[]> {
 
     if (!repo) {
         vscode.window.showErrorMessage("No git repositories found");
+        return null;
+    }
+    return repo;
+}
+
+
+async function getGitfiles(): Promise<GitStatusObject[]> {
+    const gitFiles: GitStatusObject[] = [];
+    const repo = getGitRepository();
+    if (!repo) {
         return [];
     }
-
-    const gitFiles: GitStatusObject[] = [];
 
     for (const change of repo.state.indexChanges) {
         gitFiles.push(makeGitStatusObject(change.status, change.uri));
@@ -80,7 +90,6 @@ class GitItem implements vscode.QuickPickItem {
 }
 
 export async function showGitFiles() {
-
     const gitFiles = await getGitfiles();
     const pickerItems: GitItem[] = [];
 
@@ -105,4 +114,84 @@ export async function showGitFiles() {
             }
             vscode.window.showTextDocument(item.uri);
         });
+}
+
+type Hunk = {
+    startLine: string;
+    endLine: string;
+    text: string;
+};
+
+type LineHunk = {
+    text: string;
+    line: string;
+};
+
+const pattern = new RegExp(/(\d+)\)(?:\s(.+))?/);
+
+export async function showGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
+
+    const repo = getGitRepository();
+    if (!repo) {
+        return [];
+    }
+
+    // todo need also index changed (staged)
+    const activeFile = repo.state.workingTreeChanges.filter(
+        (change) => change.uri.fsPath === editor.document.fileName
+    )[0];
+
+    // Use blame to get the full file and its line count, making it easier to 
+    // parse compared to diff HEAD.
+    const blame = await repo.blame(activeFile.uri.path);
+
+    let lines: LineHunk[] = [];
+    const hunkList: Hunk[] = [];
+
+    const addHunk = function () {
+        if (lines.length === 0) {
+            return;
+        }
+
+        hunkList.push({
+            startLine: lines[0].line,
+            endLine: lines[lines.length - 1].line,
+            text: lines
+                .map((value) => {
+                    return value.text.trim();
+                })
+                .join("\n"),
+        });
+        lines.length = 0;
+    };
+
+    for (const line of blame.split("\n")) {
+        if (line.startsWith("00000000")) {
+            const match = pattern.exec(line);
+            if (match) {
+                lines.push({ line: match[1], text: match[2] || "New line" });
+            }
+        } else {
+            addHunk();
+        }
+    }
+
+    // we could finish a file with a hunk so we need to add it
+    addHunk();
+
+    const pickerItems: Item[] = [];
+
+    for (let i = 0; i < hunkList.length; i++) {
+        const file = hunkList[i];
+        pickerItems.push(
+            new Item(
+                `$(git-commit) Hunk ${i + 1}`,
+                Number(file.startLine) - 1,
+                "",
+                `line: ${file.startLine} - ${file.endLine}`,
+                file.text
+            )
+        );
+    }
+    return pickerItems;
 }
