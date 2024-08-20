@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showGitChanges, showGitStatus } from './fuzzy_git';
+import { getGitChanges, showGitStatus } from './fuzzy_git';
 import { Item } from "./fuzzy_item"
 
 
@@ -202,7 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
           if (!editor) {
             return;
           }
-            const items = await showGitChanges(editor);
+            const items = await getGitChanges(editor);
             showFuzzySearch(editor, items, false);
         })
     );

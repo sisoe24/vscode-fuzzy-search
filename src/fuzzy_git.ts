@@ -3,6 +3,9 @@ import * as vscode from "vscode";
 import { GitExtension, Repository, Status } from "vscode-git-types";
 import { Item } from "./fuzzy_item";
 
+/**
+ * Represents a Git status record.
+ */
 interface StatusRecord {
     key: string;
     symbol: string;
@@ -10,9 +13,36 @@ interface StatusRecord {
     icon: string;
 }
 
+/**
+ * represents a git status object.
+ */
 type GitStatusObject = {
     status: StatusRecord;
     uri: vscode.Uri;
+};
+
+/**
+ * Represents a Git item for quick pick.
+ */
+class GitItem implements vscode.QuickPickItem {
+    constructor(public label: string, public description: string, public uri: vscode.Uri) {}
+}
+
+/**
+ * represents a hunk in git changes.
+ */
+type Hunk = {
+    startLine: string;
+    endLine: string;
+    text: string;
+};
+
+/**
+ * Represents a line hunk in Git changes.
+ */
+type LineHunk = {
+    text: string;
+    line: string;
 };
 
 // prettier-ignore
@@ -42,6 +72,10 @@ function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitStatusO
     return { status: StatusMap[gitStatusCode], uri: uri };
 }
 
+/**
+ * Retrieves the Git repository.
+ * @returns The Git repository or null if not found.
+ */
 function getGitRepository(): Repository | null {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git")?.exports;
     if (!gitExtension) {
@@ -59,7 +93,13 @@ function getGitRepository(): Repository | null {
     return repo;
 }
 
-
+/**
+ * Retrieves the Git status.
+ *
+ * NOTE: Currently, deleted files are not shown.
+ *
+ * @returns A promise that resolves to an array of Git status objects.
+ */
 async function getGitStatus(): Promise<GitStatusObject[]> {
     const gitStatus: GitStatusObject[] = [];
     const repo = getGitRepository();
@@ -86,10 +126,9 @@ async function getGitStatus(): Promise<GitStatusObject[]> {
     return gitStatus;
 }
 
-class GitItem implements vscode.QuickPickItem {
-    constructor(public label: string, public description: string, public uri: vscode.Uri) {}
-}
-
+/**
+ * Shows a quick pick of Git status.
+ */
 export async function showGitStatus() {
     const gitStatus = await getGitStatus();
     const pickerItems: GitItem[] = [];
@@ -106,7 +145,7 @@ export async function showGitStatus() {
 
     vscode.window
         .showQuickPick(pickerItems, {
-            title: "Git files",
+            title: "Git status",
             placeHolder: "Select a file to open",
         })
         .then((item) => {
@@ -117,35 +156,13 @@ export async function showGitStatus() {
         });
 }
 
-type Hunk = {
-    startLine: string;
-    endLine: string;
-    text: string;
-};
-
-type LineHunk = {
-    text: string;
-    line: string;
-};
-
 const pattern = new RegExp(/(\d+)\)(?:\s(.+))?/);
 
-export async function showGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
-
-    const repo = getGitRepository();
-    if (!repo) {
-        return [];
-    }
-
-    // todo need also index changed (staged)
-    const activeFile = repo.state.workingTreeChanges.filter(
-        (change) => change.uri.fsPath === editor.document.fileName
-    )[0];
-
-    // Use blame to get the full file and its line count, making it easier to 
-    // parse compared to diff HEAD.
-    const blame = await repo.blame(activeFile.uri.path);
-
+/**
+ * Get git changes by parsing the blame output.
+ * @returns A promise that resolves to an array of Hunk.
+ */
+export function parseBlameOutput(blameOutput: String): Hunk[] {
     let lines: LineHunk[] = [];
     const hunkList: Hunk[] = [];
 
@@ -166,7 +183,7 @@ export async function showGitChanges(editor: vscode.TextEditor): Promise<Item[]>
         lines.length = 0;
     };
 
-    for (const line of blame.split("\n")) {
+    for (const line of blameOutput.split("\n")) {
         if (line.startsWith("00000000")) {
             const match = pattern.exec(line);
             if (match) {
@@ -179,11 +196,29 @@ export async function showGitChanges(editor: vscode.TextEditor): Promise<Item[]>
 
     // we could finish a file with a hunk so we need to add it
     addHunk();
+    return hunkList;
+}
+
+export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
+    const repo = getGitRepository();
+    if (!repo) {
+        return [];
+    }
+
+    // todo: index changed (staged)
+    // todo: unstanged files
+    const activeFile = repo.state.workingTreeChanges.filter(
+        (change) => change.uri.fsPath === editor.document.fileName
+    )[0];
+
+    // Use blame to get the full file and its line count, making it easier to
+    // parse compared to diff HEAD.
+    const gitChanges = parseBlameOutput(await repo.blame(activeFile.uri.path));
 
     const pickerItems: Item[] = [];
 
-    for (let i = 0; i < hunkList.length; i++) {
-        const file = hunkList[i];
+    for (let i = 0; i < gitChanges.length; i++) {
+        const file = gitChanges[i];
         pickerItems.push(
             new Item(
                 `$(git-commit) Hunk ${i + 1}`,
