@@ -39,9 +39,9 @@
         "command": "fuzzySearch.activeTextEditorWithCurrentSelection"
       },
       {
-        "title": "Fuzzy problems",
+        "title": "Fuzzy diagnostics",
         "category": "Search",
-        "command": "fuzzySearch.activeTextEditorErrors"
+        "command": "fuzzySearch.activeTextEditorDiagnostics"
       },
       {
         "title": "Fuzzy git status",

@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { getGitChanges, showGitStatus } from './fuzzy_git';
 import { Item } from "./fuzzy_item"
+import { getFileDiagnostics } from './fuzzy_diagnostics';
 
 
 
 // Changes "5" to "0005", ie, ensures that |str| has |length| characters in it.
-function pad(str: string, length: number) {
+export function pad(str: string, length: number) {
   return '0'.repeat(length - str.length) + str
 }
 
@@ -134,50 +135,6 @@ function fuzzySearch(useCurrentSelection: boolean = false) {
   showFuzzySearch(editor, quickPickEntries, useCurrentSelection);
 }
 
-const diagnosticIcons = {
-    [vscode.DiagnosticSeverity.Error]: "error",
-    [vscode.DiagnosticSeverity.Warning]: "warning",
-    [vscode.DiagnosticSeverity.Information]: "info",
-    [vscode.DiagnosticSeverity.Hint]: "lightbulb",
-};
-
-function showDiagnostics(level: vscode.DiagnosticSeverity) {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        return;
-    }
-
-    const currentFile = editor.document.fileName;
-    const allDiagnostics = vscode.languages.getDiagnostics();
-
-    for (const [uri, diagnostics] of allDiagnostics) {
-        if (uri.path !== currentFile) {
-            continue;
-        }
-
-        const errors = diagnostics.filter((diag) => diag.severity <= level);
-        const quickPickEntries: Item[] = [];
-
-        for (let i = 0; i < errors.length; i++) {
-            const error = errors[i];
-            const errNum = pad((i + 1).toString(), errors.length.toString().length);
-            const errObj = diagnosticIcons[error.severity];
-
-            quickPickEntries.push(
-                new Item(
-                    `$(${errObj}) ${errNum}`,
-                    error.range.start.line,
-                    errObj,
-                    `[${error.source}]`,
-                    error.message
-                )
-            );
-        }
-
-        showFuzzySearch(editor, quickPickEntries, false);
-    }
-}
-
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
@@ -198,19 +155,26 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.gitChanges", async () => {
-          const editor = vscode.window.activeTextEditor;
-          if (!editor) {
-            return;
-          }
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
             const items = await getGitChanges(editor);
             showFuzzySearch(editor, items, false);
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand("fuzzySearch.activeTextEditorErrors", () =>
-            // TODO: We should make it configurable
-            showDiagnostics(vscode.DiagnosticSeverity.Error)
-        )
+        vscode.commands.registerCommand("fuzzySearch.activeTextEditorDiagnostics", () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+            const items = getFileDiagnostics(
+                editor.document.fileName,
+                vscode.DiagnosticSeverity.Error
+            );
+            showFuzzySearch(editor, items, false);
+        })
     );
 }
