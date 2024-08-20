@@ -9,10 +9,6 @@ function pad(str: string, length: number) {
   return '0'.repeat(length - str.length) + str
 }
 
-function getEnumKey(enumObj: any, value: number | string): string | undefined  {
-  return Object.keys(enumObj).find((key) => enumObj[key] === value);
-}
-
 let valueFromPreviousInvocation = '';
 let lastSelected: Item = new Item('', 0, '');
 
@@ -23,6 +19,8 @@ function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], us
 
   // Setup basic quick pick.
   let pick = vscode.window.createQuickPick<Item>();
+  pick.matchOnDescription = true;
+  pick.matchOnDetail = true;
   pick.items = quickPickEntries;
   pick.canSelectMany = false;
 
@@ -137,10 +135,10 @@ function fuzzySearch(useCurrentSelection: boolean = false) {
 }
 
 const diagnosticIcons = {
-    [vscode.DiagnosticSeverity.Error]: "$(error)",
-    [vscode.DiagnosticSeverity.Warning]: "$(warning)",
-    [vscode.DiagnosticSeverity.Information]: "$(info)",
-    [vscode.DiagnosticSeverity.Hint]: "$(lightbulb)",
+    [vscode.DiagnosticSeverity.Error]: "error",
+    [vscode.DiagnosticSeverity.Warning]: "warning",
+    [vscode.DiagnosticSeverity.Information]: "info",
+    [vscode.DiagnosticSeverity.Hint]: "lightbulb",
 };
 
 function showDiagnostics(level: vscode.DiagnosticSeverity) {
@@ -163,12 +161,14 @@ function showDiagnostics(level: vscode.DiagnosticSeverity) {
         for (let i = 0; i < errors.length; i++) {
             const error = errors[i];
             const errNum = pad((i + 1).toString(), errors.length.toString().length);
-            const errLabel = getEnumKey(vscode.DiagnosticSeverity, error.severity);
+            const errObj = diagnosticIcons[error.severity];
 
             quickPickEntries.push(
                 new Item(
-                    `[${errNum} ${errLabel}]: ${error.message}`,
+                    `$(${errObj}) ${errNum}`,
                     error.range.start.line,
+                    errObj,
+                    `[${error.source}]`,
                     error.message
                 )
             );
