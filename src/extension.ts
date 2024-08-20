@@ -1,18 +1,8 @@
 import * as vscode from 'vscode';
-import { showGitFiles } from './fuzzy_git';
+import { showGitChanges, showGitFiles } from './fuzzy_git';
+import { Item } from "./fuzzy_item"
 
-class Item implements vscode.QuickPickItem {
-  description: string
-  detail: string
-  rawText: string
 
-  constructor(public label: string, public line: number, rawText: string) {
-    this.description = '';
-    this.detail = '';
-    this.label = label.trim();
-    this.rawText = rawText;
-  }
-}
 
 // Changes "5" to "0005", ie, ensures that |str| has |length| characters in it.
 function pad(str: string, length: number) {
@@ -146,6 +136,12 @@ function fuzzySearch(useCurrentSelection: boolean = false) {
   showFuzzySearch(editor, quickPickEntries, useCurrentSelection);
 }
 
+const diagnosticIcons = {
+    [vscode.DiagnosticSeverity.Error]: "$(error)",
+    [vscode.DiagnosticSeverity.Warning]: "$(warning)",
+    [vscode.DiagnosticSeverity.Information]: "$(info)",
+    [vscode.DiagnosticSeverity.Hint]: "$(lightbulb)",
+};
 
 function showDiagnostics(level: vscode.DiagnosticSeverity) {
     const editor = vscode.window.activeTextEditor;
@@ -197,6 +193,17 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.gitFiles", () => {
             showGitFiles();
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.gitChanges", async () => {
+          const editor = vscode.window.activeTextEditor;
+          if (!editor) {
+            return;
+          }
+            const items = await showGitChanges(editor);
+            showFuzzySearch(editor, items, false);
         })
     );
 
