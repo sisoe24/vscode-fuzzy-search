@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getGitChanges, showGitStatus } from './fuzzy_git';
 import { Item } from "./fuzzy_item"
 import { getFileDiagnostics } from './fuzzy_diagnostics';
+import { showWorkdirFiles } from './fuzzy_workdir';
 
 
 
@@ -148,6 +149,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("fuzzySearch.activeTextEditorWithCurrentSelection", () =>
             fuzzySearch(true)
         )
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.workdir", () => {
+            showWorkdirFiles();
+        })
     );
 
     context.subscriptions.push(

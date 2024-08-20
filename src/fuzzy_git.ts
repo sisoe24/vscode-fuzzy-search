@@ -86,7 +86,7 @@ function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitChangeI
  * Retrieves the Git repository.
  * @returns The Git repository or null if not found.
  */
-function getGitRepository(): Repository | null {
+export function getGitRepository(): Repository | null {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git")?.exports;
     if (!gitExtension) {
         vscode.window.showErrorMessage("Git extension not found");
