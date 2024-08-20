@@ -225,11 +225,13 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
 
     if (activeFile.status.key === "UNTRACKED") {
         // We can't show untracked changes since they are not in the git history.
+        vscode.window.showInformationMessage("Untracked file");
         return [];
     }
 
     // Use blame to get the full file and its line count, making it easier to
-    // parse compared to diff HEAD.
+    // parse compared to diff HEAD. Probably not the most efficient way but it
+    // works for now.
     const gitChanges = parseBlameOutput(await repo.blame(activeFile.uri.path));
 
     if (gitChanges.length === 0) {
