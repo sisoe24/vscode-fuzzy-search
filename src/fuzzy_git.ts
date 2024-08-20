@@ -16,7 +16,7 @@ interface StatusRecord {
 /**
  * represents a git status object.
  */
-type GitStatusObject = {
+type GitChangeInfo = {
     status: StatusRecord;
     uri: vscode.Uri;
 };
@@ -68,7 +68,7 @@ const StatusMap: Record<Status, StatusRecord> = {
     [Status.BOTH_MODIFIED]: { key: 'BOTH_MODIFIED', symbol: 'B', description: 'Both modified in merge', icon: 'git-merge' },
 };
 
-function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitStatusObject {
+function makeGitStatusObject(gitStatusCode: Status, uri: vscode.Uri): GitChangeInfo {
     return { status: StatusMap[gitStatusCode], uri: uri };
 }
 
@@ -100,19 +100,19 @@ function getGitRepository(): Repository | null {
  *
  * @returns A promise that resolves to an array of Git status objects.
  */
-async function getGitStatus(): Promise<GitStatusObject[]> {
-    const gitStatus: GitStatusObject[] = [];
+function getGitStatuses(): GitChangeInfo[] {
+    const gitStatusList: GitChangeInfo[] = [];
     const repo = getGitRepository();
     if (!repo) {
         return [];
     }
 
     for (const change of repo.state.indexChanges) {
-        gitStatus.push(makeGitStatusObject(change.status, change.uri));
+        gitStatusList.push(makeGitStatusObject(change.status, change.uri));
     }
 
     for (const change of repo.state.untrackedChanges) {
-        gitStatus.push(makeGitStatusObject(change.status, change.uri));
+        gitStatusList.push(makeGitStatusObject(change.status, change.uri));
     }
 
     for (const change of repo.state.workingTreeChanges) {
@@ -120,17 +120,17 @@ async function getGitStatus(): Promise<GitStatusObject[]> {
         if (change.status === 6) {
             continue;
         }
-        gitStatus.push(makeGitStatusObject(change.status, change.uri));
+        gitStatusList.push(makeGitStatusObject(change.status, change.uri));
     }
 
-    return gitStatus;
+    return gitStatusList;
 }
 
 /**
  * Shows a quick pick of Git status.
  */
-export async function showGitStatus() {
-    const gitStatus = await getGitStatus();
+export function showGitStatus() {
+    const gitStatus = getGitStatuses();
     if (gitStatus.length === 0) {
         vscode.window.showInformationMessage("No git changes found");
         return;
@@ -161,13 +161,13 @@ export async function showGitStatus() {
         });
 }
 
-const pattern = new RegExp(/(\d+)\)(?:\s(.+))?/);
+const GIT_BLAME_LINE_PATTERN = new RegExp(/(\d+)\)(?:\s(.+))?/);
 
 /**
  * Get git changes by parsing the blame output.
  * @returns A promise that resolves to an array of Hunk.
  */
-export function parseBlameOutput(blameOutput: String): Hunk[] {
+function parseBlameOutput(blameOutput: String): Hunk[] {
     let lines: LineHunk[] = [];
     const hunkList: Hunk[] = [];
 
@@ -190,7 +190,7 @@ export function parseBlameOutput(blameOutput: String): Hunk[] {
 
     for (const line of blameOutput.split("\n")) {
         if (line.startsWith("00000000")) {
-            const match = pattern.exec(line);
+            const match = GIT_BLAME_LINE_PATTERN.exec(line);
             if (match) {
                 lines.push({ line: match[1], text: match[2] || "New line" });
             }
@@ -215,6 +215,7 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
     const activeFile = repo.state.workingTreeChanges.filter(
         (change) => change.uri.fsPath === editor.document.fileName
     )[0];
+
     if (!activeFile) {
         vscode.window.showInformationMessage("No git changes found");
         return [];
