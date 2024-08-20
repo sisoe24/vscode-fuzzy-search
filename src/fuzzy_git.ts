@@ -30,7 +30,12 @@ type GitChangeInfo = {
  * Represents a Git item for quick pick.
  */
 class GitItem implements vscode.QuickPickItem {
-    constructor(public label: string, public description: string, public uri: vscode.Uri) {}
+    constructor(
+        public label: string,
+        public description: string,
+        public uri: vscode.Uri,
+        public key: string
+    ) {}
 }
 
 /**
@@ -100,9 +105,6 @@ function getGitRepository(): Repository | null {
 
 /**
  * Retrieves the Git status.
- *
- * NOTE: Currently, deleted files are not shown.
- *
  * @returns A promise that resolves to an array of Git status objects.
  */
 function getGitStatuses(): GitChangeInfo[] {
@@ -121,10 +123,6 @@ function getGitStatuses(): GitChangeInfo[] {
     }
 
     for (const change of repo.state.workingTreeChanges) {
-        // Skip deleted for now as I don't know how to show them
-        if (change.status === 6) {
-            continue;
-        }
         gitStatusList.push(makeGitStatusObject(change.status, change.uri));
     }
 
@@ -148,7 +146,8 @@ export function showGitStatus() {
             new GitItem(
                 `$(${file.status.icon}) ${file.status.symbol} ${path.basename(file.uri.path)}`,
                 file.status.description,
-                file.uri
+                file.uri,
+                file.status.key
             )
         );
     }
@@ -159,13 +158,19 @@ export function showGitStatus() {
             placeHolder: "Select a file to open",
         })
         .then((item) => {
-            if (!item) {
+            if (!item){
+                return;
+            }
+            // TODO: we cannot open deleted, but they are technically still present
+            // in git history, so we could do as vscode does and create a read only
+            // text document
+            if (item.key === "DELETED") {
+                vscode.window.showInformationMessage("Cannot open deleted file");
                 return;
             }
             vscode.window.showTextDocument(item.uri);
         });
 }
-
 
 /**
  * Get git changes by parsing the blame output.
@@ -223,9 +228,10 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
         return [];
     }
 
-    if (activeFile.status.key === "UNTRACKED") {
-        // We can't show untracked changes since they are not in the git history.
-        vscode.window.showInformationMessage("Untracked file");
+    if (["UNTRACKED", "DELETED"].includes(activeFile.status.key)) {
+        vscode.window.showInformationMessage(
+            `Cannot show changes. Reason: ${activeFile.status.description}`
+        );
         return [];
     }
 
