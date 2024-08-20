@@ -4,6 +4,11 @@ import { GitExtension, Repository, Status } from "vscode-git-types";
 import { Item } from "./fuzzy_item";
 
 /**
+ * Represents a Git blame line pattern. (e.g. 00000000  ... 5 ) text)
+ */
+const GIT_BLAME_LINE_PATTERN = new RegExp(/(\d+)\)(?:\s(.+))?/);
+
+/**
  * Represents a Git status record.
  */
 interface StatusRecord {
@@ -161,7 +166,6 @@ export function showGitStatus() {
         });
 }
 
-const GIT_BLAME_LINE_PATTERN = new RegExp(/(\d+)\)(?:\s(.+))?/);
 
 /**
  * Get git changes by parsing the blame output.
@@ -210,9 +214,7 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
         return [];
     }
 
-    // todo: index changed (staged)
-    // todo: unstanged files
-    const activeFile = repo.state.workingTreeChanges.filter(
+    const activeFile = getGitStatuses().filter(
         (change) => change.uri.fsPath === editor.document.fileName
     )[0];
 
@@ -221,9 +223,15 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
         return [];
     }
 
+    if (activeFile.status.key === "UNTRACKED") {
+        // We can't show untracked changes since they are not in the git history.
+        return [];
+    }
+
     // Use blame to get the full file and its line count, making it easier to
     // parse compared to diff HEAD.
     const gitChanges = parseBlameOutput(await repo.blame(activeFile.uri.path));
+
     if (gitChanges.length === 0) {
         vscode.window.showInformationMessage("No git changes found");
         return [];
