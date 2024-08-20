@@ -14,6 +14,9 @@ let valueFromPreviousInvocation = '';
 let lastSelected: Item = new Item('', 0, '');
 
 function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], useCurrentSelection: boolean) {
+  if (quickPickEntries.length == 0) {
+    return; 
+  }
   // Build the entries we will show the user. One entry for each non-empty line,
   // prefixed with the line number. We prefix with the line number so lines stay
   // in the correct order and so duplicate lines do not get merged together.
