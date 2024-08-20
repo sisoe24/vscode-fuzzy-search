@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { getGitChanges, showGitStatus } from './fuzzy_git';
+
 import { Item } from "./fuzzy_item"
+import { getGitChanges, showGitStatus } from './fuzzy_git';
 import { getFileDiagnostics } from './fuzzy_diagnostics';
-import { showWorkdirFiles } from './fuzzy_workdir';
+import { showWorkdirFiles, showWorkdirFilesText } from './fuzzy_workdir';
 
 
 
@@ -98,7 +99,6 @@ function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], us
     pick.onDidChangeValue(value => valueFromPreviousInvocation = value);
   }
 
-
   // If fuzzy-search was cancelled navigate to the previous location.
   let startingSelection = editor.selection;
   pick.onDidHide(() => {
@@ -109,7 +109,6 @@ function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], us
       editor.selection = startingSelection;
     }
   });
-
 
   pick.show();
 }
@@ -139,7 +138,6 @@ function fuzzySearch(useCurrentSelection: boolean = false) {
   showFuzzySearch(editor, quickPickEntries, useCurrentSelection);
 }
 
-
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.activeTextEditor", () => fuzzySearch())
@@ -154,6 +152,12 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.workdir", () => {
             showWorkdirFiles();
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand("fuzzySearch.workdirText", () => {
+            showWorkdirFilesText();
         })
     );
 

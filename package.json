@@ -57,6 +57,11 @@
         "title": "Fuzzy workdir",
         "category": "Search",
         "command": "fuzzySearch.workdir"
+      },
+      {
+        "title": "Fuzzy workdir text",
+        "category": "Search",
+        "command": "fuzzySearch.workdirText"
       }
     ]
   },
