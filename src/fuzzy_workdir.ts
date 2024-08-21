@@ -156,6 +156,7 @@ export async function showWorkdirFilesText() {
         const position = new vscode.Position(item.line, charPos);
         const selection = new vscode.Selection(position, position);
         editor.selection = selection;
+        editor.revealRange(selection);
 
         quickPick.hide();
     });
