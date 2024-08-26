@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 
 import { Item } from "./fuzzy_item"
-import { getGitChanges, showGitStatus } from './fuzzy_git';
-import { getFileDiagnostics } from './fuzzy_diagnostics';
+import { showGitChanges, showGitStatus } from './fuzzy_git';
+import { showFileDiagnostics } from './fuzzy_diagnostics';
 import { showWorkdirFiles, showWorkdirFilesText } from './fuzzy_workdir';
-
 
 
 // Changes "5" to "0005", ie, ensures that |str| has |length| characters in it.
@@ -25,8 +24,6 @@ function showFuzzySearch(editor: vscode.TextEditor, quickPickEntries: Item[], us
 
   // Setup basic quick pick.
   let pick = vscode.window.createQuickPick<Item>();
-  pick.matchOnDescription = true;
-  pick.matchOnDetail = true;
   pick.items = quickPickEntries;
   pick.canSelectMany = false;
 
@@ -173,8 +170,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (!editor) {
                 return;
             }
-            const items = await getGitChanges(editor);
-            showFuzzySearch(editor, items, false);
+            showGitChanges(editor);
         })
     );
 
@@ -184,11 +180,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (!editor) {
                 return;
             }
-            const items = getFileDiagnostics(
-                editor.document.fileName,
-                vscode.DiagnosticSeverity.Error
-            );
-            showFuzzySearch(editor, items, false);
+            showFileDiagnostics(editor);
         })
     );
 }

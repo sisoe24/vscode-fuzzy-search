@@ -7,23 +7,13 @@ type QuickPickItemIcon =
     | undefined;
 
 export class Item implements vscode.QuickPickItem {
-    description: string;
-    detail: string;
-    rawText: string;
-    iconPath?: QuickPickItemIcon;
 
     constructor(
         public label: string,
         public line: number,
-        rawText: string,
-        description: string = "",
-        detail: string = "",
-        iconPath?: QuickPickItemIcon
+        public rawText: string,
+        public description: string = "",
+        public detail: string = "",
     ) {
-        this.label = label.trim();
-        this.rawText = rawText;
-        this.description = description
-        this.detail = detail
-        this.iconPath = iconPath
     }
 }

@@ -29,13 +29,16 @@ type GitChangeInfo = {
 /**
  * Represents a Git item for quick pick.
  */
-class GitItem implements vscode.QuickPickItem {
+class GitItem extends Item {
     constructor(
         public label: string,
         public description: string,
-        public uri: vscode.Uri,
-        public key: string
-    ) {}
+        public detail: string,
+        public status: string,
+        public uri: vscode.Uri
+    ) {
+        super(label, 0, "", description, detail);
+    }
 }
 
 /**
@@ -133,6 +136,11 @@ function getGitStatuses(): GitChangeInfo[] {
  * Shows a quick pick of Git status.
  */
 export function showGitStatus() {
+    const repo = getGitRepository();
+    if (!repo) {
+        return;
+    }
+
     const gitStatus = getGitStatuses();
     if (gitStatus.length === 0) {
         vscode.window.showInformationMessage("No git changes found");
@@ -144,10 +152,11 @@ export function showGitStatus() {
     for (const file of gitStatus) {
         pickerItems.push(
             new GitItem(
-                `$(${file.status.icon}) ${file.status.symbol} ${path.basename(file.uri.path)}`,
+                `$(${file.status.icon}) ${path.relative(repo.rootUri.path, file.uri.path)}`,
+                file.status.symbol,
                 file.status.description,
-                file.uri,
-                file.status.key
+                file.status.key,
+                file.uri
             )
         );
     }
@@ -156,15 +165,15 @@ export function showGitStatus() {
         .showQuickPick(pickerItems, {
             title: "Git status",
             placeHolder: "Select a file to open",
+            matchOnDescription: true,
         })
         .then((item) => {
-            if (!item){
+            if (!item) {
                 return;
             }
-            // TODO: we cannot open deleted, but they are technically still present
-            // in git history, so we could do as vscode does and create a read only
-            // text document
-            if (item.key === "DELETED") {
+            // TODO: We cannot open deleted files directly, but they are still present in git history.
+            // We could follow the approach used by vscode and create a read-only text document for them.
+            if (item.status === "DELETED") {
                 vscode.window.showInformationMessage("Cannot open deleted file");
                 return;
             }
@@ -190,7 +199,7 @@ function parseBlameOutput(blameOutput: String): Hunk[] {
             endLine: lines[lines.length - 1].line,
             text: lines
                 .map((value) => {
-                    return value.text.trim();
+                    return value.text;
                 })
                 .join("\n"),
         });
@@ -213,7 +222,7 @@ function parseBlameOutput(blameOutput: String): Hunk[] {
     return hunkList;
 }
 
-export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
+async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
     const repo = getGitRepository();
     if (!repo) {
         return [];
@@ -235,9 +244,9 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
         return [];
     }
 
-    // Use blame to get the full file and its line count, making it easier to
-    // parse compared to diff HEAD. Probably not the most efficient way but it
-    // works for now.
+    // Use git blame to retrieve the full file and its line count, which makes it
+    // easier to parse compared to diff HEAD.
+    // TODO: git blame does not display deleted lines which could be useful.
     const gitChanges = parseBlameOutput(await repo.blame(activeFile.uri.path));
 
     if (gitChanges.length === 0) {
@@ -247,17 +256,63 @@ export async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> 
 
     const pickerItems: Item[] = [];
 
-    for (let i = 0; i < gitChanges.length; i++) {
-        const file = gitChanges[i];
+    gitChanges.forEach((file) => {
         pickerItems.push(
             new Item(
-                `$(git-commit) Hunk ${i + 1}`,
+                `$(git-commit) Line: ${file.startLine} - ${file.endLine}`,
                 Number(file.startLine) - 1,
+                file.text,
                 "",
-                `line: ${file.startLine} - ${file.endLine}`,
-                file.text
+                file.text.trim()
             )
         );
-    }
+    });
+
     return pickerItems;
+}
+
+function openGitChanges(editor: vscode.TextEditor, items: Item[]): void {
+    const quickPick = vscode.window.createQuickPick<Item>();
+    quickPick.title = "Git changes";
+    quickPick.placeholder = "Select a change to jump to";
+    quickPick.items = items;
+    quickPick.matchOnDescription = true;
+    quickPick.matchOnDetail = true;
+
+    // Preselect the first item that is at or below the current cursor position.
+    quickPick.activeItems = [items.filter((item) => item.line >= editor.selection.active.line)[0]];
+
+    quickPick.onDidChangeActive((items) => {
+        let p = new vscode.Position(items[0].line, 0);
+        editor.revealRange(new vscode.Range(p, p), vscode.TextEditorRevealType.InCenter);
+        editor.selection = new vscode.Selection(p, p);
+    });
+
+    quickPick.onDidAccept(() => {
+        const item = quickPick.selectedItems[0];
+
+        let charPos = item.rawText.search(/\S/);
+        if (charPos == -1) {
+            charPos = 0;
+        }
+
+        const position = new vscode.Position(item.line, charPos);
+        const selection = new vscode.Selection(position, position);
+        editor.selection = selection;
+        editor.revealRange(selection);
+
+        quickPick.hide();
+    });
+
+    quickPick.show();
+}
+
+export async function showGitChanges(editor: vscode.TextEditor) {
+    const items = await getGitChanges(editor);
+    if (items.length === 0) {
+        vscode.window.showInformationMessage("No git changes found");
+        return;
+    }
+
+    openGitChanges(editor, items);
 }

@@ -6,35 +6,35 @@ import * as cp from "child_process";
 import * as vscode from "vscode";
 
 import { getGitRepository } from "./fuzzy_git";
+import { Item } from "./fuzzy_item";
 
 const exec = util.promisify(cp.exec);
+
+class GitFile extends Item {
+    constructor(
+        public label: string,
+        public description: string,
+        public detail: string,
+        public uri: vscode.Uri
+    ) {
+        super(label, 0, "", description, detail);
+        // TODO: would be cool to get the language icon... but how?
+        // this.iconPath = vscode.ThemeIcon.File;
+    }
+}
 
 async function getGitFiles(workspaceRoot: string): Promise<string[]> {
     const { stdout, stderr } = await exec("git ls-files", { cwd: workspaceRoot });
 
     if (stderr) {
-        console.error(`git ls-files stderr: ${stderr}`);
+        vscode.window.showErrorMessage(`Failed to get git files: ${stderr}`);
+        return [];
     }
 
     return stdout.split("\n").filter(Boolean);
 }
 
-// TODO: we have already 3 classes of quickpickitem. Should we merge them?
-class GitFileItem implements vscode.QuickPickItem {
-    iconPath?: vscode.Uri | { light: vscode.Uri; dark: vscode.Uri } | vscode.ThemeIcon | undefined;
-
-    constructor(
-        public label: string,
-        public description: string = "",
-        public detail: string = "",
-        public uri: vscode.Uri,
-        public line: number | undefined,
-        public rawText: string | undefined
-    ) {
-        // TODO: should be cool to get the language icon... but how?
-        // this.iconPath = vscode.ThemeIcon.File;
-    }
-}
+let selectedFiles: { [key: string]: number } = {};
 
 export async function showWorkdirFiles() {
     const repo = getGitRepository();
@@ -43,22 +43,26 @@ export async function showWorkdirFiles() {
     }
 
     const files = await getGitFiles(repo.rootUri.path);
-    const items: GitFileItem[] = [];
+    const items: GitFile[] = [];
 
     for (const file of files) {
         const filePath = path.join(repo.rootUri.path, file);
 
         items.push(
-            new GitFileItem(
+            new GitFile(
                 path.basename(file),
                 path.extname(file),
                 path.dirname(filePath),
-                vscode.Uri.file(filePath),
-                undefined,
-                undefined
+                vscode.Uri.file(filePath)
             )
         );
     }
+
+    items.sort((a, b) => {
+        const aTime = selectedFiles[a.label] || 0;
+        const bTime = selectedFiles[b.label] || 0;
+        return bTime - aTime;
+    });
 
     vscode.window
         .showQuickPick(items, {
@@ -71,18 +75,32 @@ export async function showWorkdirFiles() {
             if (!item) {
                 return;
             }
+
+            selectedFiles[item.label] = Date.now();
             vscode.window.showTextDocument(item.uri);
         });
 }
 
-async function getWorkdirFilesText(): Promise<GitFileItem[]> {
+class GitFileText extends Item {
+    constructor(
+        public label: string,
+        public description: string,
+        public detail: string,
+        public rawText: string,
+        public line: number,
+        public uri: vscode.Uri
+    ) {
+        super(label, line, rawText, description, detail);
+    }
+}
+async function getWorkdirFilesText(): Promise<GitFileText[]> {
     const repo = getGitRepository();
     if (!repo) {
         return [];
     }
 
     const files = await getGitFiles(repo.rootUri.path);
-    const items: GitFileItem[] = [];
+    const items: GitFileText[] = [];
 
     for (const file of files) {
         const filePath = path.join(repo.rootUri.path, file);
@@ -107,13 +125,13 @@ async function getWorkdirFilesText(): Promise<GitFileItem[]> {
             }
 
             items.push(
-                new GitFileItem(
+                new GitFileText(
                     text.trim(),
                     `Line: ${line + 1}`,
                     path.relative(repo.rootUri.path, filePath),
-                    vscode.Uri.file(filePath),
+                    text,
                     line,
-                    text
+                    vscode.Uri.file(filePath)
                 )
             );
         });
@@ -121,10 +139,14 @@ async function getWorkdirFilesText(): Promise<GitFileItem[]> {
     return items;
 }
 
-export async function showWorkdirFilesText() {
-    const items = await getWorkdirFilesText();
+interface LineCharPositionItem extends vscode.QuickPickItem {
+    rawText: string;
+    line: number;
+    uri: vscode.Uri;
+}
 
-    const quickPick = vscode.window.createQuickPick<GitFileItem>();
+export async function openTextFilePicker(items: LineCharPositionItem[]) {
+    const quickPick = vscode.window.createQuickPick<LineCharPositionItem>();
     quickPick.title = "Workdir files";
     quickPick.placeholder = "Select a file to open";
     quickPick.items = items;
@@ -137,24 +159,16 @@ export async function showWorkdirFilesText() {
 
     quickPick.onDidAccept(async () => {
         const item = quickPick.selectedItems[0];
-        if (!item) {
-            quickPick.hide();
-            return;
-        }
-        const editor = await vscode.window.showTextDocument(item.uri);
-        if (item.line === undefined || item.rawText === undefined) {
-            quickPick.hide();
-            return;
-        }
 
         let charPos = item.rawText.toLowerCase().indexOf(query.toLowerCase());
-
         if (charPos == -1) {
             charPos = 0;
         }
 
         const position = new vscode.Position(item.line, charPos);
         const selection = new vscode.Selection(position, position);
+
+        const editor = await vscode.window.showTextDocument(item.uri);
         editor.selection = selection;
         editor.revealRange(selection);
 
@@ -162,4 +176,14 @@ export async function showWorkdirFilesText() {
     });
 
     quickPick.show();
+}
+
+export async function showWorkdirFilesText() {
+    const items = await getWorkdirFilesText();
+    if (items.length === 0) {
+        vscode.window.showInformationMessage("No text files in workdir");
+        return;
+    }
+
+    openTextFilePicker(items);
 }
