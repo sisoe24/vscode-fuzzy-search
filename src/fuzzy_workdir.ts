@@ -34,7 +34,8 @@ async function getGitFiles(workspaceRoot: string): Promise<string[]> {
     return stdout.split("\n").filter(Boolean);
 }
 
-let selectedFiles: { [key: string]: number } = {};
+let index = 0
+let fileIndexMap: { [key: string]: number } = {};
 
 export async function showWorkdirFiles() {
     const repo = getGitRepository();
@@ -59,8 +60,8 @@ export async function showWorkdirFiles() {
     }
 
     items.sort((a, b) => {
-        const aTime = selectedFiles[a.label] || 0;
-        const bTime = selectedFiles[b.label] || 0;
+        const aTime = fileIndexMap[a.label] || 0;
+        const bTime = fileIndexMap[b.label] || 0;
         return bTime - aTime;
     });
 
@@ -76,7 +77,8 @@ export async function showWorkdirFiles() {
                 return;
             }
 
-            selectedFiles[item.label] = Date.now();
+            index++;
+            fileIndexMap[item.label] = index;
             vscode.window.showTextDocument(item.uri);
         });
 }
