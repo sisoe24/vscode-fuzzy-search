@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { Item } from "./fuzzy_item"
 import { showGitChanges, showGitStatus } from './fuzzy_git';
 import { showFileDiagnostics } from './fuzzy_diagnostics';
-import { showWorkdirFiles, showWorkdirFilesText } from './fuzzy_workdir';
+import { showGitFiles, showGitFilesText } from './fuzzy_workdir';
 
 
 // Changes "5" to "0005", ie, ensures that |str| has |length| characters in it.
@@ -148,13 +148,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.workdir", () => {
-            showWorkdirFiles();
+            showGitFiles();
         })
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand("fuzzySearch.workdirText", () => {
-            showWorkdirFilesText();
+            showGitFilesText();
         })
     );
 

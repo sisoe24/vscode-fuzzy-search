@@ -37,7 +37,7 @@ async function getGitFiles(workspaceRoot: string): Promise<string[]> {
 let index = 0
 let fileIndexMap: { [key: string]: number } = {};
 
-export async function showWorkdirFiles() {
+export async function showGitFiles() {
     const repo = getGitRepository();
     if (!repo) {
         return;
@@ -48,6 +48,9 @@ export async function showWorkdirFiles() {
 
     for (const file of files) {
         const filePath = path.join(repo.rootUri.path, file);
+        if (!fs.existsSync(filePath)) {
+            continue
+        }
 
         items.push(
             new GitFile(
@@ -67,7 +70,7 @@ export async function showWorkdirFiles() {
 
     vscode.window
         .showQuickPick(items, {
-            title: "Workdir files",
+            title: "Git files",
             placeHolder: "Select a file to open",
             matchOnDescription: true,
             matchOnDetail: true,
@@ -95,7 +98,7 @@ class GitFileText extends Item {
         super(label, line, rawText, description, detail);
     }
 }
-async function getWorkdirFilesText(): Promise<GitFileText[]> {
+async function getGitFilesText(): Promise<GitFileText[]> {
     const repo = getGitRepository();
     if (!repo) {
         return [];
@@ -180,8 +183,8 @@ export async function openTextFilePicker(items: LineCharPositionItem[]) {
     quickPick.show();
 }
 
-export async function showWorkdirFilesText() {
-    const items = await getWorkdirFilesText();
+export async function showGitFilesText() {
+    const items = await getGitFilesText();
     if (items.length === 0) {
         vscode.window.showInformationMessage("No text files in workdir");
         return;
