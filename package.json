@@ -54,12 +54,12 @@
         "command": "fuzzySearch.gitChanges"
       },
       {
-        "title": "Fuzzy workdir",
+        "title": "Fuzzy git files",
         "category": "Search",
         "command": "fuzzySearch.workdir"
       },
       {
-        "title": "Fuzzy workdir text",
+        "title": "Fuzzy git files text",
         "category": "Search",
         "command": "fuzzySearch.workdirText"
       }

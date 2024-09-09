@@ -75,7 +75,7 @@ function openLinePicker(editor: vscode.TextEditor, items: LineCharPositionItem[]
 
     quickPick.title = "Diagnostics";
     quickPick.canSelectMany = false;
-    quickPick.placeholder = "Select a diagnostic to jump to";
+    quickPick.placeholder = "Search a diagnostic to jump to";
     quickPick.items = items;
     quickPick.matchOnDescription = true;
     quickPick.matchOnDetail = true;

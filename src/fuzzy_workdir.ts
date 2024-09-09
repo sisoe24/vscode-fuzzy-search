@@ -19,7 +19,6 @@ class GitFile extends Item {
     ) {
         super(label, 0, "", description, detail);
         // TODO: would be cool to get the language icon... but how?
-        // this.iconPath = vscode.ThemeIcon.File;
     }
 }
 
@@ -152,7 +151,7 @@ interface LineCharPositionItem extends vscode.QuickPickItem {
 
 export async function openTextFilePicker(items: LineCharPositionItem[]) {
     const quickPick = vscode.window.createQuickPick<LineCharPositionItem>();
-    quickPick.title = "Workdir files";
+    quickPick.title = "Git files text";
     quickPick.placeholder = "Select a file to open";
     quickPick.items = items;
 

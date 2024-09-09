@@ -259,11 +259,11 @@ async function getGitChanges(editor: vscode.TextEditor): Promise<Item[]> {
     gitChanges.forEach((file) => {
         pickerItems.push(
             new Item(
-                `$(git-commit) Line: ${file.startLine} - ${file.endLine}`,
+                `$(git-commit) ${file.text.trim()}`,
                 Number(file.startLine) - 1,
                 file.text,
                 "",
-                file.text.trim()
+                `Line: ${file.startLine} - ${file.endLine}`,
             )
         );
     });
