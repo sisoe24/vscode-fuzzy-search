@@ -7,12 +7,11 @@
   "publisher": "jacobdufault",
   "preview": true,
   "engines": {
-    "vscode": "^1.40.0"
+    "vscode": "^1.88.0"
   },
   "categories": [],
   "activationEvents": [
-    "onCommand:fuzzySearch.activeTextEditor",
-    "onCommand:fuzzySearch.activeTextEditorWithCurrentSelection"
+    "onStartupFinished"
   ],
   "extensionKind": [
     "ui",
@@ -26,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/jacobdufault/vscode-fuzzy-search/issues"
   },
-  "main": "./out/src/extension",
+  "main": "./out/extension",
   "contributes": {
     "commands": [
       {
@@ -38,17 +37,44 @@
         "title": "Fuzzy outline with current selection",
         "category": "Search",
         "command": "fuzzySearch.activeTextEditorWithCurrentSelection"
+      },
+      {
+        "title": "Fuzzy diagnostics",
+        "category": "Search",
+        "command": "fuzzySearch.activeTextEditorDiagnostics"
+      },
+      {
+        "title": "Fuzzy git status",
+        "category": "Search",
+        "command": "fuzzySearch.gitStatus"
+      },
+      {
+        "title": "Fuzzy git changes",
+        "category": "Search",
+        "command": "fuzzySearch.gitChanges"
+      },
+      {
+        "title": "Fuzzy git files",
+        "category": "Search",
+        "command": "fuzzySearch.workdir"
+      },
+      {
+        "title": "Fuzzy git files text",
+        "category": "Search",
+        "command": "fuzzySearch.workdirText"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -watch -p ./",
+    "watch": "tsc -watch -p ./",
+    "compile": "tsc -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install"
   },
   "devDependencies": {
-    "@types/node": "^6.14.10",
-    "typescript": "^2.9.2",
-    "vscode": "1.1.17"
+    "@types/node": "^20.12.7",
+    "@types/vscode": "^1.88.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   }
 }
