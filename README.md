@@ -43,6 +43,12 @@ All commands are available by opening the Command Palette (`Command+Shift+P` on 
     ]
     ```
 
+## Known Issues
+
+- `Fuzzy git status` does not show deleted git files.
+- `Fuzzy git changes` does not show deleted lines.
+- `Fuzzy git files` does not show new files (files that are not yet tracked by git).
+
 ## Demo
 
 ![Demo](./images/demo.gif)
