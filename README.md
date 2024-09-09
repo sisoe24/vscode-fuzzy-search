@@ -17,8 +17,8 @@ All commands are available by opening the Command Palette (`Command+Shift+P` on 
 | `Search: Fuzzy diagnostics`                    | Fuzzy search through current file's diagnostics       | `fuzzySearch.activeTextEditorDiagnostics`          |
 | `Search: Fuzzy git status`                     | Fuzzy search through git status of working directory  | `fuzzySearch.gitStatus`                            |
 | `Search: Fuzzy git changes`                    | Fuzzy search through git changes in current file      | `fuzzySearch.gitChanges`                           |
-| `Search: Fuzzy git files`                      | Fuzzy search through git-tracked files in working dir | `fuzzySearch.workdir`                              |
-| `Search: Fuzzy git files text`                 | Fuzzy search text in git-tracked files of working dir | `fuzzySearch.workdirText`                          |
+| `Search: Fuzzy git files`                      | Fuzzy search through git-tracked files in working dir | `fuzzySearch.gitFiles`                              |
+| `Search: Fuzzy git files text`                 | Fuzzy search text in git-tracked files of working dir | `fuzzySearch.gitFilesText`                          |
 
 - By default, the extension does not provide any shortcut. But you can assign each command to one. (see [Key Bindings for Visual Studio Code](https://code.visualstudio.com/docs/getstarted/keybindings) for more information).
 

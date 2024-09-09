@@ -147,13 +147,13 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand("fuzzySearch.workdir", () => {
+        vscode.commands.registerCommand("fuzzySearch.gitFiles", () => {
             showGitFiles();
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand("fuzzySearch.workdirText", () => {
+        vscode.commands.registerCommand("fuzzySearch.gitFilesText", () => {
             showGitFilesText();
         })
     );
