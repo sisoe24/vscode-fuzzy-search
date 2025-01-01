@@ -4,3 +4,4 @@ src/**
 .gitignore
 build.cmd
 tsconfig.json
+images
