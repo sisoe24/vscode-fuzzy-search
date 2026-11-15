@@ -15,8 +15,8 @@ All commands are available by opening the Command Palette (`Command+Shift+P` on 
 
 | Command Name                                   | Description                                           | Command ID                                         |
 | ---------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
-| `Search: Fuzzy outline`                        | Fuzzy search through the current file's outline       | `fuzzySearch.activeTextEditor`                     |
-| `Search: Fuzzy outline with current selection` | Fuzzy search outline, starting with current selection | `fuzzySearch.activeTextEditorWithCurrentSelection` |
+| `Search: Fuzzy lines`                          | Fuzzy search through the lines of the current file    | `fuzzySearch.activeTextEditor`                     |
+| `Search: Fuzzy lines with current selection`   | Fuzzy search lines, starting with current selection   | `fuzzySearch.activeTextEditorWithCurrentSelection` |
 | `Search: Fuzzy diagnostics`                    | Fuzzy search through current file's diagnostics       | `fuzzySearch.activeTextEditorDiagnostics`          |
 | `Search: Fuzzy git status`                     | Fuzzy search through git status of working directory  | `fuzzySearch.gitStatus`                            |
 | `Search: Fuzzy git changes`                    | Fuzzy search through git changes in current file      | `fuzzySearch.gitChanges`                           |

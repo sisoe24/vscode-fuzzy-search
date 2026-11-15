@@ -19,6 +19,11 @@ Fuzzy Search Plus is a fork of
 
 ### Changed
 
-- `Search: Fuzzy outline` puts the cursor on the first match of the query,
+- Renamed `Search: Fuzzy outline` to `Search: Fuzzy lines`.
+- Renamed `Search: Fuzzy outline with current selection` to
+  `Search: Fuzzy lines with current selection`.
+- These two commands search the lines of the file, not its symbols. Command
+  IDs are unchanged, so existing keybindings still work.
+- `Search: Fuzzy lines` puts the cursor on the first match of the query,
   not at the start of the line.
 - The extension activates when you run one of its commands, not at startup.

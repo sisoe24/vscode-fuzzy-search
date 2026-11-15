@@ -15,7 +15,7 @@
   "keywords": [
     "fuzzy",
     "search",
-    "outline",
+    "lines",
     "git",
     "diagnostics",
     "quick pick"
@@ -36,12 +36,12 @@
   "contributes": {
     "commands": [
       {
-        "title": "Fuzzy outline",
+        "title": "Fuzzy lines",
         "category": "Search",
         "command": "fuzzySearch.activeTextEditor"
       },
       {
-        "title": "Fuzzy outline with current selection",
+        "title": "Fuzzy lines with current selection",
         "category": "Search",
         "command": "fuzzySearch.activeTextEditorWithCurrentSelection"
       },
