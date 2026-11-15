@@ -1,13 +1,24 @@
 # Fuzzy Search Plus
 
-Fork of [jacobdufault/vscode-fuzzy-search](https://github.com/jacobdufault/vscode-fuzzy-search),
-which is no longer maintained. Adds diagnostics, git and workspace pickers.
+Jump anywhere with a fuzzy search in the VS Code quick pick. Type a few
+characters, pick a result, and press Enter to go there. When you search the
+current file, the editor follows the selected result as you move through the
+list.
 
-Provides a fuzzy search using the quick pick window of the current text
-document.
+You can search:
 
-Bind `fuzzySearch.activeTextEditor` to a keyboard shortcut to use the search
-quickly.
+- the lines of the current file
+- the errors, warnings and hints of the current file
+- the files with git changes, and the changed lines of the current file
+- the files tracked by git, and the text inside them
+
+Bind `fuzzySearch.activeTextEditor` (`Search: Fuzzy lines`) to a keyboard
+shortcut to search the current file quickly.
+
+This extension is a fork of
+[jacobdufault/vscode-fuzzy-search](https://github.com/jacobdufault/vscode-fuzzy-search),
+which was last updated in 2020. The fork adds the diagnostics and git
+searches.
 
 ## Available Commands
 
