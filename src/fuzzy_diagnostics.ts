@@ -105,6 +105,15 @@ function openLinePicker(editor: vscode.TextEditor, items: LineCharPositionItem[]
         quickPick.hide();
     });
 
+    // If the picker was cancelled, go back to the starting position.
+    const startingSelection = editor.selection;
+    quickPick.onDidHide(() => {
+        if (quickPick.selectedItems.length === 0) {
+            editor.selection = startingSelection;
+            editor.revealRange(startingSelection, vscode.TextEditorRevealType.InCenter);
+        }
+    });
+
     quickPick.show();
 }
 
