@@ -7,6 +7,12 @@ Fuzzy Search Plus is a fork of
 [jacobdufault/vscode-fuzzy-search](https://github.com/jacobdufault/vscode-fuzzy-search)
 (`jacobdufault.fuzzy-search` 0.0.3).
 
+## [1.0.1]
+
+### Added
+
+- Extension icon.
+
 ## [1.0.0]
 
 ### Added
@@ -16,7 +22,6 @@ Fuzzy Search Plus is a fork of
 - `Search: Fuzzy git changes`: search the changed lines of the current file.
 - `Search: Fuzzy git files`: search the files tracked by git.
 - `Search: Fuzzy git files text`: search the text of the files tracked by git.
-- Extension icon.
 
 ### Changed
 
