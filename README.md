@@ -3,7 +3,7 @@
 Jump anywhere with a fuzzy search in the VS Code quick pick. Type a few
 characters, pick a result, and press Enter to go there. When you search the
 current file, the editor follows the selected result as you move through the
-list.
+list, and Escape takes you back to where you were.
 
 You can search:
 
