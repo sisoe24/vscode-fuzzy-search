@@ -7,6 +7,12 @@ Fuzzy Search Plus is a fork of
 [jacobdufault/vscode-fuzzy-search](https://github.com/jacobdufault/vscode-fuzzy-search)
 (`jacobdufault.fuzzy-search` 0.0.3).
 
+## [1.0.2]
+
+### Changed
+
+- Rewrote the README.
+
 ## [1.0.1]
 
 ### Added
