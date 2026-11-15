@@ -1,4 +1,7 @@
-# Fuzzy search
+# Fuzzy Search Plus
+
+Fork of [jacobdufault/vscode-fuzzy-search](https://github.com/jacobdufault/vscode-fuzzy-search),
+which is no longer maintained. Adds diagnostics, git and workspace pickers.
 
 Provides a fuzzy search using the quick pick window of the current text
 document.
@@ -51,4 +54,4 @@ All commands are available by opening the Command Palette (`Command+Shift+P` on 
 
 ## Demo
 
-![Demo](./images/demo.gif)
+![Demo](https://raw.githubusercontent.com/sisoe24/vscode-fuzzy-search/master/images/demo.gif)
