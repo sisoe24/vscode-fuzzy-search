@@ -4,8 +4,9 @@
   "description": "Fuzzy search the current file, its diagnostics, git changes and git-tracked files from the quick pick.",
   "author": "Virgil Sisoe",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "virgilsisoe",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.88.0"
   },
